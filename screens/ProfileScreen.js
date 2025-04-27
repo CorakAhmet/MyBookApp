@@ -1,208 +1,284 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
-import { Button, Card, Title, Paragraph, Avatar, Divider, List } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
-import { sampleBooks } from '../data/books';
+import React, { useState, useEffect } from "react";
+import {
+    SafeAreaView,
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+    ScrollView,
+    ImageBackground
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS, FONTS, SIZES, icons, images } from '../constants';
 
 const ProfileScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('favorites');
-  
-  // Mock user data
-  const user = {
-    name: 'Ahmet Yılmaz',
-    email: 'ahmet.yilmaz@example.com',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    bio: 'Kitap okumayı seven bir edebiyat tutkunu. Özellikle bilim kurgu ve fantastik türleri tercih ediyorum.',
-    favoriteBooks: sampleBooks.slice(0, 3),
-    readBooks: sampleBooks.slice(3, 8),
-    comments: [
-      { id: 1, bookTitle: 'Dune', text: 'Harika bir bilim kurgu klasiği!', date: '10.05.2023' },
-      { id: 2, bookTitle: '1984', text: 'Distopik romanların en iyilerinden biri.', date: '22.04.2023' },
-    ]
-  };
+    const [userData, setUserData] = useState(null);
+    const [showAbout, setShowAbout] = useState(false);
 
-  const renderBookItem = (book) => (
-    <TouchableOpacity 
-      key={book.id}
-      style={styles.bookItem}
-      onPress={() => navigation.navigate('BookDetail', { book })}
-    >
-      <Card style={styles.bookCard}>
-        <Card.Cover source={{ uri: book.coverImage }} style={styles.bookCover} />
-        <Card.Content>
-          <Title numberOfLines={1} style={styles.bookTitle}>{book.title}</Title>
-          <Paragraph numberOfLines={1}>{book.author}</Paragraph>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
-  );
+    useEffect(() => {
+        loadUserData();
+    }, []);
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Avatar.Image source={{ uri: user.avatar }} size={80} />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-        </View>
-      </View>
+    const loadUserData = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('userData');
+            if (userData) {
+                setUserData(JSON.parse(userData));
+            } else {
+                // Kullanıcı giriş yapmamışsa giriş ekranına yönlendir
+                navigation.replace('Login');
+            }
+        } catch (error) {
+            console.error("Kullanıcı verisi yüklenirken hata:", error);
+        }
+    };
 
-      <Card style={styles.bioCard}>
-        <Card.Content>
-          <Title>Hakkımda</Title>
-          <Paragraph>{user.bio}</Paragraph>
-        </Card.Content>
-      </Card>
+    const handleLogout = async () => {
+        Alert.alert(
+            "Çıkış Yap",
+            "Çıkış yapmak istediğinizden emin misiniz?",
+            [
+                {
+                    text: "İptal",
+                    style: "cancel"
+                },
+                {
+                    text: "Çıkış Yap",
+                    onPress: async () => {
+                        try {
+                            // Kullanıcı oturum bilgisini güncelle
+                            const userData = await AsyncStorage.getItem('userData');
+                            if (userData) {
+                                const parsedData = JSON.parse(userData);
+                                parsedData.isLoggedIn = false;
+                                await AsyncStorage.setItem('userData', JSON.stringify(parsedData));
+                            }
+                            
+                            // Login ekranına yönlendir
+                            navigation.replace('Login');
+                        } catch (error) {
+                            console.error("Çıkış yapılırken hata:", error);
+                            Alert.alert("Hata", "Çıkış yapılırken bir hata oluştu.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'favorites' && styles.activeTab]} 
-          onPress={() => setActiveTab('favorites')}
-        >
-          <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>Favoriler</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'read' && styles.activeTab]} 
-          onPress={() => setActiveTab('read')}
-        >
-          <Text style={[styles.tabText, activeTab === 'read' && styles.activeTabText]}>Okuduklarım</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'comments' && styles.activeTab]} 
-          onPress={() => setActiveTab('comments')}
-        >
-          <Text style={[styles.tabText, activeTab === 'comments' && styles.activeTabText]}>Yorumlarım</Text>
-        </TouchableOpacity>
-      </View>
+    if (!userData) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Yükleniyor...</Text>
+            </View>
+        );
+    }
 
-      <View style={styles.tabContent}>
-        {activeTab === 'favorites' && (
-          <View style={styles.booksContainer}>
-            {user.favoriteBooks.map(book => renderBookItem(book))}
-          </View>
-        )}
+    // About bölümünü renderla
+    const renderAboutSection = () => {
+        if (!showAbout) return null;
+        
+        return (
+            <View style={styles.aboutContainer}>
+                <Text style={styles.sectionTitle}>Uygulama Hakkında</Text>
+                <View style={styles.aboutContent}>
+                    <Image
+                        source={require('../assets/images/booklogo.png')}
+                        style={styles.aboutLogo}
+                    />
+                    <Text style={styles.aboutTitle}>Kitap Uygulaması</Text>
+                    <Text style={styles.aboutSubtitle}>Sizin İçin Okuma Dünyasını Keşfediyoruz</Text>
+                    <Text style={styles.aboutDescription}>
+                        Kitap Uygulamasına hoş geldiniz! Burada, okuma tutkunları için özenle seçilmiş kitap bulabilir ve keşfedebilirsiniz.
+                    </Text>
+                    <Text style={styles.aboutDescription}>
+                        Biz, size en sevdiğiniz yazarların en yeni eserlerini ve klasiklerini sunmaya adanmak için buradayız. Kütüphanemizdeki her kitap, size unutulmaz bir okuma deneyimi yaşatmak için titizlikle seçilmiştir.
+                    </Text>
+                    <Text style={styles.aboutDescription}>
+                        Okuma yolculuğunuz boyunca size eşlik etmek için buradayız. Sizin için derinlikli incelemeler hazırlıyoruz, en son çıkan kitapları sizin için takip ediyoruz ve okuma listeleri oluşturuyoruz.
+                    </Text>
+                    <Text style={styles.aboutDescription}>
+                        Kitaplarla dolu dünyamıza adım atın ve sizi bekleyen keşiflerle dolu bir yolculuğa çıkın. Okuma tutkunuysanız, doğru yerdesiniz!
+                    </Text>
+                </View>
+            </View>
+        );
+    };
 
-        {activeTab === 'read' && (
-          <View style={styles.booksContainer}>
-            {user.readBooks.map(book => renderBookItem(book))}
-          </View>
-        )}
-
-        {activeTab === 'comments' && (
-          <View>
-            {user.comments.map(comment => (
-              <Card key={comment.id} style={styles.commentCard}>
-                <Card.Content>
-                  <Text style={styles.commentBookTitle}>{comment.bookTitle}</Text>
-                  <Text style={styles.commentText}>{comment.text}</Text>
-                  <Text style={styles.commentDate}>{comment.date}</Text>
-                </Card.Content>
-              </Card>
-            ))}
-          </View>
-        )}
-      </View>
-
-      <Button 
-        mode="outlined" 
-        style={styles.editProfileButton}
-        icon="account-edit"
-      >
-        Profili Düzenle
-      </Button>
-    </ScrollView>
-  );
+    return (
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Profil Başlığı */}
+                <View style={styles.headerContainer}>
+                    <Text style={styles.headerTitle}>Profil</Text>
+                </View>
+                
+                {/* Profil Bilgileri */}
+                <View style={styles.profileContainer}>
+                    <Image
+                        source={images.profil}
+                        style={styles.profileImage}
+                        resizeMode="cover"
+                    />
+                    <Text style={styles.username}>{userData.username}</Text>
+                    <Text style={styles.memberSince}>Üyelik Tarihi: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "Bilinmiyor"}</Text>
+                </View>
+                
+                {/* Hesap Ayarları */}
+                <View style={styles.settingsContainer}>
+                    <Text style={styles.sectionTitle}>Hesap Ayarları</Text>
+                    
+                    <TouchableOpacity style={styles.settingItem}>
+                        <Text style={styles.settingText}>Profil Bilgilerini Düzenle</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.settingItem}>
+                        <Text style={styles.settingText}>Şifre Değiştir</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.settingItem}>
+                        <Text style={styles.settingText}>Bildirim Ayarları</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                        style={styles.settingItem}
+                        onPress={() => setShowAbout(!showAbout)}
+                    >
+                        <Text style={styles.settingText}>
+                            {showAbout ? "Uygulama Hakkında Gizle" : "Uygulama Hakkında Göster"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                
+                {/* About Bölümü */}
+                {renderAboutSection()}
+                
+                {/* Çıkış Yap Butonu */}
+                <TouchableOpacity
+                    style={styles.logoutButton}
+                    onPress={handleLogout}
+                >
+                    <Text style={styles.logoutButtonText}>Çıkış Yap</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-  },
-  userInfo: {
-    marginLeft: 15,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  userEmail: {
-    color: '#666',
-  },
-  bioCard: {
-    margin: 10,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    margin: 10,
-    elevation: 2,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#6200ee',
-  },
-  tabText: {
-    color: '#666',
-  },
-  activeTabText: {
-    color: '#6200ee',
-    fontWeight: 'bold',
-  },
-  tabContent: {
-    margin: 10,
-  },
-  booksContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  bookItem: {
-    width: '48%',
-    marginBottom: 10,
-  },
-  bookCard: {
-    elevation: 2,
-  },
-  bookCover: {
-    height: 180,
-  },
-  bookTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  commentCard: {
-    marginBottom: 10,
-  },
-  commentBookTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  commentText: {
-    marginBottom: 5,
-  },
-  commentDate: {
-    color: '#666',
-    fontSize: 12,
-    textAlign: 'right',
-  },
-  editProfileButton: {
-    margin: 20,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.white,
+    },
+    scrollContent: {
+        padding: SIZES.padding,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+    },
+    loadingText: {
+        ...FONTS.h3,
+        color: COLORS.primary,
+    },
+    headerContainer: {
+        marginBottom: SIZES.padding,
+    },
+    headerTitle: {
+        ...FONTS.h1,
+        color: COLORS.black,
+    },
+    profileContainer: {
+        alignItems: 'center',
+        marginVertical: SIZES.padding,
+    },
+    profileImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        marginBottom: SIZES.padding,
+        borderWidth: 3,
+        borderColor: COLORS.primary,
+    },
+    username: {
+        ...FONTS.h2,
+        color: COLORS.black,
+    },
+    memberSince: {
+        ...FONTS.body4,
+        color: COLORS.gray,
+        marginTop: SIZES.base,
+    },
+    settingsContainer: {
+        backgroundColor: COLORS.lightGray2,
+        borderRadius: SIZES.radius,
+        padding: SIZES.padding,
+        marginVertical: SIZES.padding,
+    },
+    sectionTitle: {
+        ...FONTS.h3,
+        color: COLORS.black,
+        marginBottom: SIZES.base,
+    },
+    settingItem: {
+        paddingVertical: SIZES.padding,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.lightGray3,
+    },
+    settingText: {
+        ...FONTS.body3,
+        color: COLORS.black,
+    },
+    aboutContainer: {
+        backgroundColor: COLORS.lightGray2,
+        borderRadius: SIZES.radius,
+        padding: SIZES.padding,
+        marginVertical: SIZES.padding,
+    },
+    aboutContent: {
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        padding: SIZES.padding,
+        borderRadius: SIZES.radius,
+        alignItems: 'center',
+    },
+    aboutLogo: {
+        width: 80,
+        height: 80,
+        marginBottom: SIZES.padding,
+    },
+    aboutTitle: {
+        ...FONTS.h2,
+        color: COLORS.black,
+        marginBottom: SIZES.base,
+        textAlign: 'center',
+    },
+    aboutSubtitle: {
+        ...FONTS.body3,
+        color: COLORS.gray,
+        marginBottom: SIZES.padding,
+        textAlign: 'center',
+    },
+    aboutDescription: {
+        ...FONTS.body4,
+        color: COLORS.black,
+        marginBottom: SIZES.base,
+        textAlign: 'center',
+    },
+    logoutButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: SIZES.radius,
+        padding: SIZES.padding,
+        alignItems: 'center',
+        marginVertical: SIZES.padding,
+    },
+    logoutButtonText: {
+        ...FONTS.h3,
+        color: COLORS.white,
+    },
 });
 
-export default ProfileScreen;
+export default ProfileScreen; 
