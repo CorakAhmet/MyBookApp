@@ -147,14 +147,14 @@ const Home = ({ navigation }) => {
     const categoriesData = [
         {
             id: 1,
-            categoryName: "En Çok Okunanlar",
+            categoryName: "Yeni Gelenler",
             books: [
                 bookmomo, bookhayvanciftligi, bookdunyatarihi,bookustalik,bookbedendili
             ]
         },
         {
             id: 2,
-            categoryName: "Yeni Gelenler",
+            categoryName: "En Çok Okunanlar",
             books: [
                 bookuccisimproblemi,bookikigai
             ]
