@@ -94,6 +94,7 @@ const Home = ({ navigation }) => {
         genre: [
             "Roman", "Macera", "Drama"
         ],
+        description: "İnsanları 'okuma'nın en hızlı yöntemi bu kitapta...Karşınızdakinin bedenine bakarak aklından geçenleri okumanız mümkün. Duygu ve düşünceleri çözümlemek, insanları doğru tanımak, tuzağa düşmemek, yalanı ortaya çıkarmak için beden dilini bilmeniz yeterli. Ayrıca beden dilinizi kullanarak patronunuz, aileniz, arkadaşlarınız ve diğer insanların sizinle ilgili düşüncelerini de değiştirebilirsiniz. Gerçek hisler yüzde gizlidir. Başparmaklar, ayaklar ve gözbebekleri ruh halimizi ortaya koyar. Kendimize duyduğumuz güveni konuşmalarımızdan önce bedenimiz yansıtır. Etkili bir el sıkışma birçok kapıyı açar. Karşımızdakini ikna etmenin en etkili yöntemi beden dilini kullanmaktır. İnsanlara güven vermek göründüğü kadar zor değildir. Otoriteyi hem kurmak hem de yıkmak beden dili ile mümkündür. Eski FBI ajanı Navarro'nun profesyonel deneyimleri ile Princeton Üniversitesinde psikoloji eğitimi alan Marvin Karlins'in bilimsel çalışmalarını birleştiren bu kitap, beden dilini öğrenip kullanarak dünyanızı nasıl kontrol altında tutacağınızı anlatıyor.",
         
         backgroundColor: "rgba(240,240,232,0.9)",
         navTintColor: "#000"
