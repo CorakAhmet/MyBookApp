@@ -41,7 +41,7 @@ const LoginScreen = ({ navigation }) => {
 
     const handleLogin = async () => {
         // Test kullanıcısı için özel durum
-        if (username === "test" && password === "test") {
+        if (username === "admin" && password === "admin") {
             await AsyncStorage.setItem('userData', JSON.stringify({
                 username: "test",
                 isLoggedIn: true,
